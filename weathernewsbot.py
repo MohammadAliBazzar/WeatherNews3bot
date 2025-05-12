@@ -12,17 +12,30 @@ nest_asyncio.apply()
 
 async def get_weather(city):
     try:
-        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric&lang=en"
+        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric&lang=fa"
         response = requests.get(url)
         data = response.json()
         if data.get('main'):
             temp = data['main']['temp']
+            feels_like = data['main']['feels_like']
+            humidity = data['main']['humidity']
+            pressure = data['main']['pressure']
+            wind_speed = data['wind']['speed']
             description = data['weather'][0]['description']
-            return f"Temperature in {city}: {temp}°C\nCondition: {description}"
+
+            return (
+                f"📍 شهر: {city}\n"
+                f"🌡 دما: {temp}°C\n"
+                f"🤒 حس واقعی: {feels_like}°C\n"
+                f"💧 رطوبت: {humidity}%\n"
+                f"🌀 باد: {wind_speed} m/s\n"
+                f"📈 فشار هوا: {pressure} hPa\n"
+                f"🌥 وضعیت: {description}"
+            )
         else:
-            return "City not found. Please try again."
+            return "شهر پیدا نشد. لطفاً نام دقیق شهر را وارد کن."
     except Exception as e:
-        return f"Error retrieving data: {e}"
+        return f"خطا در دریافت اطلاعات: {e}"
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     city = update.message.text.strip()
