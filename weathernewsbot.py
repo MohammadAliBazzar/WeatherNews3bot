@@ -1,6 +1,6 @@
 import requests
 from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 import nest_asyncio
 import asyncio
 
@@ -11,7 +11,7 @@ nest_asyncio.apply()
 
 provinces = {
     'تهران': ['تهران', 'شمیرانات', 'ری'],
-    'مازندران': ['ساری', 'نوشهر', 'بابل'],
+    'مازندران': ['بابل', 'ساری', 'نوشهر'],
 }
 
 async def get_weather(city):
@@ -41,38 +41,38 @@ async def get_weather(city):
     except Exception as e:
         return f"خطا در دریافت اطلاعات: {e}"
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    welcome_message = (
-        "سلام! من ربات هواشناسی هستم. لطفاً نام شهر یا استان خود را وارد کنید. "
-        "مثلاً: تهران، شیراز یا بابل."
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "سلام! من ربات هواشناسی‌ام.\n"
+        "اسم شهرت رو بنویس تا وضعیت هوا رو بگم.\n"
+        "اگر اسم استان رو نوشتی، یه شهر هم ازش بنویس."
     )
-    await update.message.reply_text(welcome_message)
 
 
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     city_or_province = update.message.text.strip()
-
-
-    found_province = False
     for province, cities in provinces.items():
         if city_or_province in cities:
-            found_province = True
             city = city_or_province
             result = await get_weather(city)
             await update.message.reply_text(result)
-            break
+            return
         elif city_or_province == province:
-            found_province = True
-            await update.message.reply_text(f"شما استان {province} را وارد کردید، لطفاً یک شهر را وارد کنید.")
-            break
+            await update.message.reply_text(f"شما استان {province} را وارد کردید، لطفاً یک شهر از آن را بنویس.")
+            return
 
-    if not found_province:
-        result = await get_weather(city_or_province)
-        await update.message.reply_text(result)
+ 
+    result = await get_weather(city_or_province)
+    await update.message.reply_text(result)
+
 
 async def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
     print("ربات در حال اجراست...")
     await app.run_polling()
 
